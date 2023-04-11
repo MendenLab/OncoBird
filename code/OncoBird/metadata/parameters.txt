@@ -1,0 +1,4 @@
+data-file=OncoBird_mutex_ngs_alterations_minx.csv
+search-on-signaling-network=true
+network-file=Network.sif
+

@@ -1,0 +1,86 @@
+FROM rocker/shiny:4.2.1
+
+RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+	wget \
+	nano \
+	vim \
+	git \
+	maven \
+	uuid-runtime \
+	bzip2 \
+	libcurl4-openssl-dev \
+	zlib1g zlib1g-dev \
+	libssl-dev \
+	libxml2-dev \
+	libmpc-dev \
+	libpng-dev \
+	libicu-dev \
+	liblzma-dev \
+	libbz2-dev \
+	libpcre3-dev \
+	openjdk-8-jdk \
+	default-jre \
+	openmpi-bin \
+	libudunits2-dev \
+	libgdal-dev \
+	libx11-dev \
+	mesa-common-dev \
+	libglu1-mesa-dev \
+	apt-utils \
+	unixodbc-dev \
+	cargo
+
+RUN R -e "install.packages('BiocManager')"
+RUN R -e "install.packages(c('prettydoc','DT','readr'))"
+
+RUN R -e "BiocManager::install(c('devtools','tidyverse', 'data.table', 'survminer', 'reshape', 'ggfortify', 'pROC', 'formattable', 'rjson', 'survival', 'Hmisc','here', 'survcomp','dplyr','S4Vectors','SummarizedExperiment','ggplot2','tidyr','data.table','survminer','reshape2','rstatix','assertthat','ggreepel','ComplexHeatmap'))"
+
+# Install OncoBird
+RUN R -e "devtools::install_github(repo = 'aljoshoh/OncoBird', subdir = 'code/OncoBird')"
+RUN git clone https://github.com/aljoshoh/OncoBird.git
+RUN cp /OncoBird/code/OncoBird/* /srv/shiny-server/ 
+
+# Clean up
+RUN rm -rf /var/lib/apt/lists/* \
+	&& apt-get clean \
+	&& apt-get purge
+RUN rm -rf /tmp/downloaded_packages/ /tmp/*.rds
+
+
+# below libs were missing and starting rstudio lead to a rather cryptic
+# error, compare: https://forum.qt.io/topic/93247/qt-qpa-plugin-could-not-load-the-qt-platform-plugin-xcb-in-even-though-it-was-found/9
+RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+	libasound2 \
+	libxkbcommon-x11-0 \
+	libxkbcommon-x11-dev \
+	libx11-xcb1
+
+# install OpenJDK-8
+RUN apt-get update && \
+    apt-get -y install sudo && \
+    apt-get install -y openjdk-8-jdk && \
+    apt-get install -y ant && \
+    apt-get clean;
+
+# fix certificate issues
+RUN apt-get update && \
+    apt-get install ca-certificates-java && \
+    apt-get clean && \
+    update-ca-certificates -f;
+
+# setup JAVA_HOME -- useful for docker commandline
+ENV JAVA_HOME /usr/lib/jvm/java-8-openjdk-amd64/
+RUN export JAVA_HOME
+
+
+# Install mutex
+RUN git clone https://github.com/PathwayAndDataAnalysis/mutex.git
+WORKDIR "/mutex"
+RUN mvn clean compile
+RUN mvn assembly:single
+
+RUN sudo chown -R shiny:shiny /srv/shiny-server/metadata
+RUN mkdir /data
+
+# all done.
+

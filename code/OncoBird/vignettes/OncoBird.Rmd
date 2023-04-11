@@ -1,0 +1,352 @@
+---
+title: |
+  | Oncology Biomarker Discovery (OncoBird)
+  | Supplementary Note 1
+author: |
+  | Ohnmacht AJ, Stahler A, Stintzing S, Modest DP, Holch JW, Westfalen CB, 
+  | Hölzel L, Schübel MK, Galhoz A, Farnoud A, Ud-Dean M,
+  | Vehling-Kaiser U, Decker T, Moehler M,
+  | Heinig M, Heinemann V, Menden MP
+date: "11/04/2023"
+output:
+  pdf_document:
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 7
+    fig_height: 6
+  word_document:
+    toc: yes
+  html_document:
+    toc: yes
+    fig_caption: yes
+    number_sections: yes
+    fig_width: 7
+    fig_height: 6
+affiliation: Computational Health Center, Helmholtz Munich
+email: ohnmachtalexander@gmail.com
+vignette: "%\\VignetteIndexEntry{OncoBird} %\\VignetteEncoding{UTF-8} %\\VignetteEngine{knitr::rmarkdown}\n"
+package: OncoBird
+abstract: "*OncoBird* identifies candidates for predictive biomarkers in oncology
+  clinical trials by leveraging mutually exclusive somatic mutations in tumour subtypes for
+  subgroup analysis. It systematically screens for predictive effects of somatic alterations
+  in predefined tumour subtypes. It allows users to gain insights about the molecular
+  landscape and biomarker landscape in their trial and explore putative cancer subtypes
+  and how they may be leveraged for precision oncology. In the original manuscript,
+  we showcased *OncoBird* for a clinical trial for FOLFIRI plus either cetuximab and
+  bevacizumab in metastatic colorectal cancer [@stintzing]. Here, we showcase OncoBird
+  by using the ADJUVANT clinical trial for gefitinib in non-small cell lung cancer
+  (NSCLC) [@cancer_oncogenomics_2021_5242512][@minerva][@adjuvant]. \n"
+bibliography: cite.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), 
+                      tidy = TRUE,
+                      xtable.comment = FALSE, 
+                      echo=TRUE,
+                      eval=TRUE, 
+                      message = FALSE,
+                      warning=FALSE, 
+                      error = FALSE,
+                      cache = FALSE, 
+                      size="footnotesize",
+                      fig.pos='H',
+                      dev = "pdf",
+                      results='markup',
+                      fig.lp='fig:',
+                      fig.align = 'center',
+                      fig.path='figures/example-', 
+                      cache.path = 'cache/example-',
+                      tidy.opts=list(width.cutoff=80), 
+                      dev = 'pdf' 
+)
+```
+
+# Setup data object
+For the analysis with *OncoBird*, data can be imported by providing both data on somatic alterations and clinical data. Molecular data is supplied in a binary fashion representing wild type and altered status. Thereby, we support different types of alterations: copy number alterations are divided into amplifications and deletions, and all other mutations such as single-nucleotide variations (SNVs), truncating mutations etc. are summarized. If one gene shows more than one feature per type of mutation, is it summarised and is defined as mutant status if either type occurs. Clinical data contains survival endpoints or binary variables that measure treatment success and potentially interesting tumour subtypes such as the tumour location, morphology, mutational or gene expression subtypes. Furthermore, it contains potential covariates to correct for in the statistical analysis, e.g., number of metastatic sites, information about a tumour resection. 
+
+Here, we utilise the ADJUVANT clinical trial for gefitinib plus chemotherapy versus chemotherapy alone in NSCLC. We are interested in the EGFR subtypes 1 and 2, i.e. exon 19 deletion or exon 21 Leu858Arg, and the smoking history as putative tumour subtypes. Clinical endpoints are overall survival (OS) and disease-free survival (DFS). We analyse 22 somatic alterations in 171 patients, from which 76 patients were treated with chemotherapy alone and 96 were treated with gefitinib.
+
+```{r import, echo=TRUE}
+library(OncoBird)
+# Download and import data
+temp <- tempfile()
+download.file(
+  "https://zenodo.org/record/5242512/files/cancer-oncogenomics/minerva-adjuvant-nsclc-v1.0.0.zip?download=1",
+  temp,
+  mode = "wb"
+)
+data <- read.delim(
+  unz(
+    temp,
+    "cancer-oncogenomics-minerva-adjuvant-nsclc-36a8b72/data/multigene-171_combined.csv"
+  ),
+  sep = ","
+)
+unlink(temp)
+
+# Clean data
+data <- data %>%
+  mutate(
+    Smoking_history = dplyr::recode(
+      Smoking_history,
+      `1` = "smoker1",
+      `2` = "smoker2",
+      `3` = "smoker3")) %>%
+  mutate(Smoking_history = factor(Smoking_history)) %>%
+  mutate(
+    EGFR_subtype = dplyr::recode(
+      EGFR_subtype, 
+      `1` = "EGFR1", 
+      `2` = "EGFR2")) %>%
+  mutate(EGFR_subtype = factor(EGFR_subtype)) %>%
+  mutate(
+    EGFR = dplyr::recode(
+      EGFR_subtype,
+      `EGFR1` = "1",
+      `EGFR2` = "1")) %>%
+  mutate(EGFR = as.numeric(as.character(EGFR))) %>%
+  dplyr::select(-EGFR, EGFR) %>%
+  mutate(Pathology = factor(Pathology)) %>%
+  mutate(Sex = factor(Sex)) %>%
+  mutate(Clinical_stage = factor(Clinical_stage)) %>%
+  mutate(N_stage = factor(N_stage))
+
+data_clinical <- data[1:13]
+data_mutations <- cbind(data[1], data[14:ncol(data)])
+
+# Create data object
+se <- prepare_data(
+  data = data,
+  vars = c("OS", "DFS"),
+  med_impute_muts = TRUE,
+  remove_clin = NA,
+  sample_column = "PatientID",
+  treatment_column = "Adj",
+  mutation_columns = colnames(data)[14:ncol(data)]
+)
+se
+
+# Number of somatic alterations
+ncol(assay(se))
+
+# Number of patients per treatment
+table(rowData(se)$treatment)
+```
+
+# Enrichments of tumour subtypes
+First, the mutational landscape in tumour subtypes is analysed independently of the received therapy. The created data object can be passed to find enrichments between the two tumour subtypes of interest, e.g. subtype 'EGFR1' is enriched in the 'smoker1' subgroup.
+```{r subtype_enrichment, echo=TRUE, warning = FALSE, out.width="400px", out.height="250px"}
+se <- cl_subtype_enrichment(
+  se = se,
+  col_label = "Smoking.history",
+  row_label = "EGFR.subtype",
+  digits = 3
+)
+pl_subtype_enrichment(se)
+```
+
+# Enrichment of somatic mutations in tumour subtypes
+Next, somatic alterations are tested for enrichment in up to two subtypes. For example, *TP53* mutations are depleted in the 'smoker1' subgroup, but this is not significant after multiplicity correction.
+```{r calculate_subtype_mutations_enrichment, warning = FALSE, echo = TRUE, results = FALSE, out.width="400px", out.height="300px"}
+se <- cl_enrichment_genomics(
+  se,
+  sample_column = "sample",
+  min_mutants = 10,
+  subtype = c("Smoking.history", "EGFR.subtype")
+)
+pl_enrichment_genomics(se,
+                       p_value = 0.05,
+                       fdr = 1)
+```
+
+# Mutual exclusivity
+Somatic mutations of functionally similar genes frequently occur mutually exclusive among patient tumours, shown by an oncoprint. Therefore, *OncoBird* leverages mutually exclusive modules using the *Mutex* algorithm [@mutex]. For that, *Mutex* needs to be installed, and its path supplied. For example, mutations in *TP53* and amplifications in  *CDK4* and *SMAD4* are mutually exclusive. Another example which we also will highlight later are exclusivities between *MYC* and *MCL1* amplifications.
+```{r mututal_exclusivity, echo=TRUE, results = FALSE, out.width="400px", out.height="300px"}
+pl_oncoprint(se)
+se <- cl_mututal_exclusivity(
+  se,
+  min_variants = 10,
+  mutex_output_exists = TRUE,
+  save = paste0(getwd(), "/../metadata/"),
+  mutex_path = "path/to/mutex/installation"
+)
+pl_mutual_exclusivity(se)
+```
+
+# Treatment specific biomarkers
+*OncoBird* stratifies cancer patients for each treatment first by tumour subtypes and then checks for a differential prognosis between mutant and wild type tumours, arriving at treatment-specific biomarkers. The unstratified population is denoted by the subgroup 'available'. For example, tumours with *TP53* mutations had unfavourable DFS for both therapies. Furthermore, *RB1* mutations showed poor DFS in the gefitinib treatment arm, and *NKX2-1* amplifications a poor DFS in the chemotherapy treatment arm. All mentioned associations were conserved in the 'smoker1' subgroup.
+```{r calculate_treatment_specific_biomarkers, warning = FALSE, cache = TRUE, echo=TRUE, results=FALSE, out.width="600px", out.height="300px"}
+se <- cl_treatment_specific_biomarkers(
+  se,
+  #include_covariates = NULL,
+  min_samples = 10,
+  min_redistribution = 5,
+  treatment = c("chemo", "gefitinib"),
+  subtypes = c("Smoking.history", "EGFR.subtype"),
+  readouts = c("DFS", "OS")
+)
+pl_treatment_specific_biomarkers(se)
+se <- pl_treatment_specific_biomarkers_subtype(se,
+                                               fdr_max = 0.1)
+metadata(se)$plot$treatment_specific_biomarkers_subtype
+```
+
+```{r plot_treatment_specific_biomarkers_modules_oncoprint, warning=FALSE, echo=TRUE, results = FALSE, out.width="400px", out.height="200px"}
+se <- cl_tsb_modules_oncoprint(
+  se,
+  p_value = 0.05,
+  fdr = 0.1)
+metadata(se)$tsb_modules_oncoprint$DFS$`gefitinib/resistant`
+metadata(se)$tsb_modules_oncoprint$DFS$`chemo/resistant`
+```
+
+# Predictive biomarkers 
+For retrieving predictive biomarkers, interaction tests screen for differential prognosis between treatments for mutations in respective tumour subtypes. Below, no predictive effects were found as significant for OS, but DFS showed predictive benefits for the overall population for patients with *RB1* mutations, *NKX2-1* amplifications, as well as the module consisting of mutations in *TP53* and *SMAD4* and gains in *CDK4* and the module consisting of *MCL1* and *MYC* amplifications. Visualised are the hazard ratios across treatment arms stemming from an interaction test (FDR~int~ < 0.2).
+```{r calculate_predictive_biomarkers, warning = FALSE, cache=TRUE, echo=TRUE, results = FALSE, out.width="600px", out.height="300px"}
+se <- cl_predictive_biomarkers(
+  se = se,
+  #include_covariates = NULL,
+  min_samples = 10,
+  min_redistribution = 5)
+pl_predictive_biomarkers(se)
+se <- pl_predictive_biomarkers_subtypes(
+  se,
+  fdr_max = 0.1)
+```
+For visualising this predictive treatment effects, we show hazard ratios for each mutant and wild type population. Here, only DFS has significant predictive effects. Tumours with *NKX2-1* amplifications suggested benefits from gefitinib, which is conserved in the 'smoker1' subpopulation. Specifically, in the 'smoker1' population which is enriched in subtype 'EGFR1', chemotherapy showed worse outcomes when treating patients with *NKX2-1* amplifications. Furthermore, especially tumours with no *RB1* mutations benefit from gefitinib. Finally, we observed gefitinib benefits in tumours that were characterised by mutations in either TP53, SMAD4 or CDK4 amplifications.
+
+```{r plot_predictive_biomarkers, warning = FALSE, cache=TRUE, echo=TRUE, results = FALSE, out.width="600px", out.height="300px"}
+se <- cl_predictive_comparison(
+  se = se,
+  subtypes = c("Smoking.history", "EGFR.subtype"),
+  readouts = c("OS", "DFS"),
+  covariates = FALSE,
+  fdr_i = 0.2
+)
+
+plot <- pl_predictive_comparison(
+  se,
+  min_altered = 10,
+  max_fdr = 0.1)
+
+gridExtra::grid.arrange(grobs = list(
+         plot$DFS$p_extraction$altered +
+           theme(plot.margin = unit(c(1, 1, 3, 1.2), "cm")) +
+           theme(legend.position = "none") +
+           ggtitle("mutant"),
+         plot$DFS$p_extraction$`wild type` +
+           theme(plot.margin = unit(c(1, 1, 3, 1.2), "cm")) +
+           theme(legend.position = "right") +
+           ggtitle("wild type")
+       ), layout_matrix = rbind(c(1, 2)))
+```
+
+# Plot examples
+```{r calc_examples, warning = FALSE, echo=TRUE, results = 'hide', out.width="400px", out.height="400px"}
+plot1 <- pl_example(
+  se,
+  mutations = "NKX2_AMP",
+  readout = "DFS",
+  subtype_column = "NGS.probe",
+  subtype = "available",
+  treatment = c("gefitinib", "chemo")
+)
+plot1[[5]]
+
+plot2 <- pl_example(
+  se,
+  mutations = "RB1_SV",
+  readout = "DFS",
+  subtype_column = "NGS.probe",
+  subtype = "available",
+  treatment = c("gefitinib", "chemo")
+)
+plot2[[5]]
+
+plot3 <- pl_example(
+  se,
+  mutations = "TP53_SV_or_SMAD4_SV_or_CDK4_AMP",
+  readout = "DFS",
+  subtype_column = "NGS.probe",
+  subtype = "available",
+  treatment = c("gefitinib", "chemo")
+)
+plot3[[5]]
+
+plot4 <- pl_example(
+  se,
+  mutations = "MCL1_AMP_or_MYC_AMP",
+  readout = "DFS",
+  subtype_column = "NGS.probe",
+  subtype = "available",
+  treatment = c("gefitinib", "chemo")
+)
+plot4[[5]]
+```
+
+# Summary table
+```{r summary_table, result = FALSE, echo=TRUE, out.width="400px", out.height="400px"}
+summary_table <- make_table_summary(
+  cond = metadata(se)$conditions,
+  preds = metadata(se)$predictive_biomarkers_forest,
+  tsbiomarkers = metadata(se)$treatment_specific_biomarkers_forest,
+  clin = rowData(se),
+  mut = assay(se),
+  mut_me = metadata(se)$me_modules,
+  fdr_int_threshold = 0.2,
+  fdr_biomarker_threshold = 0.1,
+  round_digit = 2,
+  sample_column = "sample",
+  covariates = c(1),
+  treatment = metadata(se)$wf_meta$treatment
+)
+summary_table
+```
+# Resampling-based correction of p-values and treatment effects
+Biomarker analysis with *OncoBird* selects biomarkers with predictive components. However, the conditional average treatment effect (CATE) in the found subgroups will be biased. Therefore, we perform a resampling-based correction of the CATE. For multiplicity-adjustment of the treatment effect p-values, we employ permutation-based tests. First, we used permutations for adjusting the treatment effect p-value.
+
+```{r permutations, warning = TRUE}
+subgroups_adjp <- cl_permutations(
+  se,
+  treatment = c("gefitinib", "chemo"),
+  subtype = c("NGS.probe"),
+  readout = c("DFS"),
+  include_covariates = NULL,
+  min_samples = 10,
+  min_redistribution = 5,
+  meta_load = TRUE,
+  meta_path = paste0(getwd(), "/../metadata"),
+  n_permutations = 1000,
+  fdr_int_threshold = 0.2,
+  fdr_threshold = 0.1
+)
+subgroups_adjp %>% dplyr::select(-c(id))
+```
+
+Next, we use a bootstrap-based correction of the treatment effect in subgroups to obtain honest treatment effects and confidence intervals.
+```{r bootstrap, warning = TRUE}
+subgroups_CIs <- cl_bootstrap(
+  se,
+  treatment = c("gefitinib", "chemo"),
+  subtype = c("NGS.probe"),
+  readout = c("DFS"),
+  include_covariates = NULL,
+  min_samples = 10,
+  min_redistribution = 5,
+  meta_load = TRUE,
+  meta_path = paste0(getwd(), "/../metadata"),
+  n_bootstraps = 500,
+  fdr_int_threshold = 0.2,
+  fdr_threshold = 0.1
+)
+subgroups_CIs$CIs
+```
+# Session info {.unnumbered}
+
+```{r sessionInfo, echo=FALSE}
+sessionInfo()
+```
+
+# References

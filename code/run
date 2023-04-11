@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -ex
+
+Rscript -e "rmarkdown::render(input = 'OncoBird/vignettes/OncoBird.Rmd', output_dir = '../results', clean = TRUE)"

@@ -1,0 +1,34 @@
+Package: OncoBird
+Title: Oncology Biomarker Discovery (OncoBird)
+Version: 0.99.1
+Authors@R: c(
+    person(given = "Alexander J.",
+           family = "Ohnmacht",
+           role = c("aut", "cre"),
+           email = "ohnmachtalexander@gmail.com",
+           comment = c(ORCID = "0000-0002-1481-9426")),
+    person(given = "Michael P.",
+          family = "Menden",
+          role = "aut",
+          email = "michael.menden@helmholtz-muenchen.de",
+          comment = c(ORCID = "0000-0003-0267-5792"))
+          )
+Description: OncoBird identifies candidates for predictive biomarkers in oncology trials by 
+    leveraging mutually exclusive somatic mutations in tumour subtypes for subgroup analysis. 
+    It systematically screens for predictive effects of somatic alterations in pre-defined tumour subtypes. 
+    It allows users to gain insights about the biomarker landscape in their trial 
+    and explore putative cancer subtypes and how they may be leveraged for precision oncology. 
+    In our manuscript, we showcased ONcoBird for a clinical trial for FOLFIRI plus either cetuximab and bevacizumab in metastatic colorectal cancer. 
+    Here, we showcase OncoBird by using a publically available clinical trial for gefitinib in non-small cell lung cancer. 
+License: MIT + file LICENSE
+Encoding: UTF-8
+biocViews: Software, Visualization, GUI, Regression, Survival, Pharmacogenomics
+URL: https://github.com/aljoshoh/OncoBird
+BugReports: https://github.com/aljoshoh/OncoBird/issues
+Depends: R(>= 4.2.0), dplyr, SummarizedExperiment, S4Vectors, ggplot2, ggfortify
+Imports: tidyr, data.table, tibble, survival, stats, survminer, reshape, reshape2, stringi, stringr, gridExtra, rstatix, assertthat, ggrepel, ComplexHeatmap, grDevices, graphics, utils 
+Suggests: knitr, rmarkdown
+VignetteBuilder: knitr
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.0
+NeedsCompilation: no

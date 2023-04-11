@@ -1,0 +1,11 @@
+metadata_version: 1
+name: Oncology Biomarker Discoverer (OncoBird)
+description: Identify candidates for predictive biomarkers in oncology trials by leveraging
+  mutually exclusive somatic mutations in tumour subtypes for subgroup analysis.
+authors:
+- name: Alexander Joschua Ohnmacht
+  affiliations:
+  - name: Institute of Computational Biology, Helmholtz Munich
+corresponding_contributor:
+  name: Michael Patrick Menden
+  email: michael.menden@helmholtz-muenchen.de
