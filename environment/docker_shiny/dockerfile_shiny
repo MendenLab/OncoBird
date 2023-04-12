@@ -38,7 +38,7 @@ RUN R -e "BiocManager::install(c('devtools','tidyverse', 'data.table', 'survmine
 # Install OncoBird
 RUN R -e "devtools::install_github(repo = 'aljoshoh/OncoBird', subdir = 'code/OncoBird')"
 RUN git clone https://github.com/aljoshoh/OncoBird.git
-RUN cp /OncoBird/code/OncoBird/* /srv/shiny-server/ 
+RUN cp -r /OncoBird/code/OncoBird/* /srv/shiny-server/ 
 
 # Clean up
 RUN rm -rf /var/lib/apt/lists/* \
