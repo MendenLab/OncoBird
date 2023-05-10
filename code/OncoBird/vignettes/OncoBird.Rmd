@@ -3,11 +3,11 @@ title: |
   | Oncology Biomarker Discovery (OncoBird)
   | Supplementary Note 1
 author: |
-  | Ohnmacht AJ, Stahler A, Stintzing S, Modest DP, Holch JW, Westfalen CB, 
+  | Ohnmacht AJ, Stahler A, Stintzing S, Modest DP, Holch JW, Westphalen CB, 
   | Hölzel L, Schübel MK, Galhoz A, Farnoud A, Ud-Dean M,
   | Vehling-Kaiser U, Decker T, Moehler M,
   | Heinig M, Heinemann V, Menden MP
-date: "11/04/2023"
+date: "09/05/2023"
 output:
   pdf_document:
     toc: yes
@@ -30,18 +30,18 @@ package: OncoBird
 abstract: "*OncoBird* identifies candidates for predictive biomarkers in oncology
   clinical trials by leveraging mutually exclusive somatic mutations in tumour subtypes for
   subgroup analysis. It systematically screens for predictive effects of somatic alterations
-  in predefined tumour subtypes. It allows users to gain insights about the molecular
+  in predefined tumour subtypes. It allows users to gain insights into the molecular
   landscape and biomarker landscape in their trial and explore putative cancer subtypes
   and how they may be leveraged for precision oncology. In the original manuscript,
   we showcased *OncoBird* for a clinical trial for FOLFIRI plus either cetuximab and
   bevacizumab in metastatic colorectal cancer [@stintzing]. Here, we showcase OncoBird
   by using the ADJUVANT clinical trial for gefitinib in non-small cell lung cancer
-  (NSCLC) [@cancer_oncogenomics_2021_5242512][@minerva][@adjuvant]. \n"
+  (NSCLC) [@cancer_oncogenomics_2021_5242512; @minerva; @adjuvant]. \n"
 bibliography: cite.bib
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60), 
+knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 50), 
                       tidy = TRUE,
                       xtable.comment = FALSE, 
                       echo=TRUE,
@@ -58,29 +58,33 @@ knitr::opts_chunk$set(tidy.opts = list(width.cutoff = 60),
                       fig.align = 'center',
                       fig.path='figures/example-', 
                       cache.path = 'cache/example-',
-                      tidy.opts=list(width.cutoff=80), 
                       dev = 'pdf' 
 )
 ```
 
 # Setup data object
-For the analysis with *OncoBird*, data can be imported by providing both data on somatic alterations and clinical data. Molecular data is supplied in a binary fashion representing wild type and altered status. Thereby, we support different types of alterations: copy number alterations are divided into amplifications and deletions, and all other mutations such as single-nucleotide variations (SNVs), truncating mutations etc. are summarized. If one gene shows more than one feature per type of mutation, is it summarised and is defined as mutant status if either type occurs. Clinical data contains survival endpoints or binary variables that measure treatment success and potentially interesting tumour subtypes such as the tumour location, morphology, mutational or gene expression subtypes. Furthermore, it contains potential covariates to correct for in the statistical analysis, e.g., number of metastatic sites, information about a tumour resection. 
+For the analysis with *OncoBird*, data can be imported by providing both data on somatic alterations and clinical data. Molecular data is supplied in a binary fashion representing wild type and altered status. Thereby, we support different types of alterations: copy number alterations are divided into amplifications and deletions, and all other mutations such as single-nucleotide variations (SNVs), truncating mutations etc. are summarised. If one gene shows more than one feature per type of mutation, is it summarised and  defined as mutant status if either type occurs. Clinical data contains survival endpoints or binary variables that measure treatment success and potentially interesting tumour subtypes such as the tumour location, morphology, mutational or gene expression subtypes. Furthermore, it contains potential covariates to correct for in the statistical analysis, e.g., number of metastatic sites, and information about a tumour resection. 
 
-Here, we utilise the ADJUVANT clinical trial for gefitinib plus chemotherapy versus chemotherapy alone in NSCLC. We are interested in the EGFR subtypes 1 and 2, i.e. exon 19 deletion or exon 21 Leu858Arg, and the smoking history as putative tumour subtypes. Clinical endpoints are overall survival (OS) and disease-free survival (DFS). We analyse 22 somatic alterations in 171 patients, from which 76 patients were treated with chemotherapy alone and 96 were treated with gefitinib.
+Here, we utilise the ADJUVANT clinical trial for gefitinib plus chemotherapy versus chemotherapy alone in NSCLC. We are interested in the EGFR subtypes 1 and 2, i.e. exon 19 deletion or exon 21 Leu858Arg, and the smoking history as putative tumour subtypes. Clinical endpoints are overall survival (OS) and disease-free survival (DFS). We analyse 22 somatic alterations in 171 patients, from which 76 patients were treated with chemotherapy alone and 95 were treated with gefitinib.
 
 ```{r import, echo=TRUE}
 library(OncoBird)
 # Download and import data
 temp <- tempfile()
 download.file(
-  "https://zenodo.org/record/5242512/files/cancer-oncogenomics/minerva-adjuvant-nsclc-v1.0.0.zip?download=1",
+  paste0(
+    "https://zenodo.org/record/5242512/files/",
+    "cancer-oncogenomics/",
+    "minerva-adjuvant-nsclc-v1.0.0.zip?download=1"),
   temp,
   mode = "wb"
 )
 data <- read.delim(
   unz(
     temp,
-    "cancer-oncogenomics-minerva-adjuvant-nsclc-36a8b72/data/multigene-171_combined.csv"
+    paste0(
+      "cancer-oncogenomics-minerva-adjuvant-nsclc-36a8b72/",
+      "data/multigene-171_combined.csv")
   ),
   sep = ","
 )
@@ -162,7 +166,7 @@ pl_enrichment_genomics(se,
 ```
 
 # Mutual exclusivity
-Somatic mutations of functionally similar genes frequently occur mutually exclusive among patient tumours, shown by an oncoprint. Therefore, *OncoBird* leverages mutually exclusive modules using the *Mutex* algorithm [@mutex]. For that, *Mutex* needs to be installed, and its path supplied. For example, mutations in *TP53* and amplifications in  *CDK4* and *SMAD4* are mutually exclusive. Another example which we also will highlight later are exclusivities between *MYC* and *MCL1* amplifications.
+Somatic mutations of functionally similar genes frequently occur mutually exclusive among patient tumours, shown by an oncoprint. Therefore, *OncoBird* leverages mutually exclusive modules using the *Mutex* algorithm [@mutex]. For that, *Mutex* needs to be installed, and its path supplied. For example, mutations in *TP53* and amplifications in  *CDK4* and *SMAD4* are mutually exclusive. Another example which we also will highlight later is exclusivities between *MYC* and *MCL1* amplifications.
 ```{r mututal_exclusivity, echo=TRUE, results = FALSE, out.width="400px", out.height="300px"}
 pl_oncoprint(se)
 se <- cl_mututal_exclusivity(
@@ -215,7 +219,7 @@ se <- pl_predictive_biomarkers_subtypes(
   se,
   fdr_max = 0.1)
 ```
-For visualising this predictive treatment effects, we show hazard ratios for each mutant and wild type population. Here, only DFS has significant predictive effects. Tumours with *NKX2-1* amplifications suggested benefits from gefitinib, which is conserved in the 'smoker1' subpopulation. Specifically, in the 'smoker1' population which is enriched in subtype 'EGFR1', chemotherapy showed worse outcomes when treating patients with *NKX2-1* amplifications. Furthermore, especially tumours with no *RB1* mutations benefit from gefitinib. Finally, we observed gefitinib benefits in tumours that were characterised by mutations in either TP53, SMAD4 or CDK4 amplifications.
+For visualising these predictive treatment effects, we show hazard ratios for each mutant and wild type population. Here, only DFS has significant predictive effects. Tumours with *NKX2-1* amplifications suggested benefits from gefitinib, which is conserved in the 'smoker1' subpopulation. Specifically, in the 'smoker1' population which is enriched in subtype 'EGFR1', chemotherapy showed worse outcomes when treating patients with *NKX2-1* amplifications. Furthermore, especially tumours with no *RB1* mutations benefited from gefitinib. Finally, we observed gefitinib benefits in tumours that were characterised by mutations in either TP53, SMAD4 or CDK4 amplifications.
 
 ```{r plot_predictive_biomarkers, warning = FALSE, cache=TRUE, echo=TRUE, results = FALSE, out.width="600px", out.height="300px"}
 se <- cl_predictive_comparison(
@@ -287,7 +291,8 @@ plot4[[5]]
 ```
 
 # Summary table
-```{r summary_table, result = FALSE, echo=TRUE, out.width="400px", out.height="400px"}
+```{r summary_table, result = FALSE, echo=TRUE}
+options(width = 60)
 summary_table <- make_table_summary(
   cond = metadata(se)$conditions,
   preds = metadata(se)$predictive_biomarkers_forest,
@@ -305,9 +310,10 @@ summary_table <- make_table_summary(
 summary_table
 ```
 # Resampling-based correction of p-values and treatment effects
-Biomarker analysis with *OncoBird* selects biomarkers with predictive components. However, the conditional average treatment effect (CATE) in the found subgroups will be biased. Therefore, we perform a resampling-based correction of the CATE. For multiplicity-adjustment of the treatment effect p-values, we employ permutation-based tests. First, we used permutations for adjusting the treatment effect p-value.
+Biomarker analysis with *OncoBird* selects biomarkers with predictive components. However, the conditional average treatment effect (CATE) in the found subgroups will be biased. Therefore, we perform a resampling-based correction of the CATE. First, for multiplicity-adjustment of the treatment effect p-values, we employ permutation-based tests.
 
 ```{r permutations, warning = TRUE}
+options(width = 60)
 subgroups_adjp <- cl_permutations(
   se,
   treatment = c("gefitinib", "chemo"),
@@ -346,6 +352,7 @@ subgroups_CIs$CIs
 # Session info {.unnumbered}
 
 ```{r sessionInfo, echo=FALSE}
+options(width = 60)
 sessionInfo()
 ```
 
