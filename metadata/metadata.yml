@@ -1,12 +1,62 @@
 metadata_version: 1
 name: Oncology Biomarker Discovery (OncoBird)
-description: |-
-  Identify candidates for predictive biomarkers in oncology trials by leveraging
-    mutually exclusive somatic mutations in tumour subtypes for subgroup analysis.
+description: Identify candidates for predictive biomarkers in oncology trials by leveraging
+  mutually exclusive somatic mutations in tumour subtypes for subgroup analysis.
 authors:
-- name: Alexander Joschua Ohnmacht
+- name: Ohnmacht AJ
   affiliations:
-  - name: Institute of Computational Biology, Helmholtz Zentrum München
+  - name: Computational Health Center, Helmholtz Munich
+- name: Stahler A
+  affiliations:
+  - name: Charité Universitätsmedizin, Freie Universität Berlin and Humboldt-Universität
+      zu Berlin
+- name: Stintzing S
+  affiliations:
+  - name: Charité Universitätsmedizin, Freie Universität Berlin and Humboldt-Universität
+      zu Berlin
+- name: Modest DP
+  affiliations:
+  - name: Charité Universitätsmedizin, Freie Universität Berlin and Humboldt-Universität
+      zu Berlin
+- name: Holch JW
+  affiliations:
+  - name: Department of Medicine III and Comprehensive Cancer Centre Munich, University
+      Hospital Grosshadern, LMU Munich
+- name: Westphalen CB
+  affiliations:
+  - name: Department of Medicine III and Comprehensive Cancer Centre Munich, University
+      Hospital Grosshadern, LMU Munich
+- name: Hölzel L
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Schübel MK
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Galhoz A
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Farnoud A
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Ud-Dean M
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Vehling-Kaiser
+  affiliations:
+  - name: Oncological Practice
+- name: Decker T
+  affiliations:
+  - name: Oncological Practice
+- name: Moehler M
+  affiliations:
+  - name: Department of Medicine I and Research Center for Immunotherapy
+- name: Heinig M
+  affiliations:
+  - name: Computational Health Center, Helmholtz Munich
+- name: Heinemann V
+  affiliations:
+  - name: Department of Medicine III and Comprehensive Cancer Centre Munich, University
+      Hospital Grosshadern, LMU Munich
 corresponding_contributor:
-  name: Michael Patrick Menden
-  email: michael.menden@helmholtz-muenchen.de
+  name: Michael P Menden
+  email: michael.menden@helmholtz-munich.de
