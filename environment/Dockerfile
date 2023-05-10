@@ -5,7 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        apt-utils=1.6.14 \
+        apt-utils \
         cmake=3.10.2-1ubuntu2.18.04.2 \
         r-base-dev=4.1.2-1.1804.0 \
         libnlopt0 \
