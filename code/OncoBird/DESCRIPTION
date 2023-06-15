@@ -1,6 +1,6 @@
 Package: OncoBird
 Title: Oncology Biomarker Discovery (OncoBird)
-Version: 0.99.1
+Version: 0.1.0
 Authors@R: c(
     person(given = "Alexander J.",
            family = "Ohnmacht",
