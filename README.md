@@ -44,4 +44,7 @@ data/data_clinical.csv
 
 Reference
 --
-For citing OncoBird, please refer to the original manuscript [DOI pending].
+For citing OncoBird, please refer to the original manuscript [https://doi.org/10.1038/s41467-023-41011-4](https://doi.org/10.1038/s41467-023-41011-4):
+
+Ohnmacht A.J. _et al_. The Oncology Biomarker Discovery framework reveals cetuximab and bevacizumab response patterns in
+metastatic colorectal cancer. _Nat. Commun._, **14**(1) 2023
